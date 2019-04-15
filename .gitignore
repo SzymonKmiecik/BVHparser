@@ -1,0 +1,12 @@
+include/
+cmake_install.cmake
+Makefile
+1.bvh
+BVHparser
+BVHparser.project
+BVHparser.workspace
+BVHparser.workspace.layout
+CMakeCache.txt
+CMakeFiles/
+.codelite/
+
