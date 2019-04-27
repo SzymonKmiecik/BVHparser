@@ -8,8 +8,8 @@ set (source_dir "${PROJECT_SOURCE_DIR}/src/")
 
 
 
-SET_SOURCE_FILES_PROPERTIES(${source_dir}/tinyfiledialogs.c PROPERTIES LANGUAGE CXX )
+
 file (GLOB_RECURSE source_files "${source_dir}/*.cpp")
 file (GLOB_RECURSE header_files "${source_dir}/*.h")
 
-add_executable (BVHparser ${source_files} ${header_files} ${source_dir}/tinyfiledialogs.c)
+add_executable (BVHparser ${source_files} ${header_files})

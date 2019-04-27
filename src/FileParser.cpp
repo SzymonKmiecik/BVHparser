@@ -1,34 +1,44 @@
 
 #include "FileParser.h"
 
-const std::string KEYWORDS::root = "ROOT";
-const std::string KEYWORDS::name = "JOINT";
+const std::string bvh_type = "HIERARCHY";
 
 
-
-FileParser::FileParser(std::string* n, std::vector<Node>* skeleton)
+FileParser::FileParser()
 {
-	parseRaw(n, skeleton);
+
 }
 
-FileParser::~FileParser()
+FileParser::FileParser( const std::string* n)
 {
+	parseRaw(n);
 }
 
-void FileParser::parseRaw(std::string* data, std::vector<Node>* skeleton)
+FileParser::~FileParser() = default;
+
+void FileParser::parseRaw( const std::string* data)
 {
 	std::stringstream stream;
 	stream.str(*data);
 	std::string tmp;
 	while (std::getline(stream, tmp, '\n'))
 	{
-  		if (tmp.find(KEYWORDS::name) != std::string::npos) //
+		if (tmp.find(bvh_type) != std::string::npos)
+		{	
+			this->data_type = bvh;
+			break; 
+		}
+		else
 		{
-			std::stringstream ss(tmp);
-			std::string junkToken;
-			ss >> junkToken >> junkToken;
-			skeleton->push_back(Node(junkToken));
+			this->data_type = not_supported;
 		}
 	}
-	std::cout << "parsed!" << std::endl;
+	std::cout << "Type checked" << std::endl;
+}
+
+
+
+int FileParser::GetDataType()
+{
+	return this->data_type;
 }

@@ -5,21 +5,19 @@
 #include <sstream>
 #include "Node.h"
 
-struct KEYWORDS
-{
-	static const std::string root;
-	static const std::string name;
-
-};
+#define bvh 0x01
+#define not_supported 0x02
 
 
 class FileParser
 {
-
-	void parseRaw(std::string*, std::vector<Node>*);
+	int data_type;
+	void parseRaw(const std::string*); //get data format
 public:
-	FileParser(std::string* , std::vector<Node>*);
-	~FileParser();
+	FileParser( const std::string*);
+	FileParser();
+	int GetDataType();
+	virtual ~FileParser();
 };
 
 
