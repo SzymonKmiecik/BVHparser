@@ -11,9 +11,8 @@ void start();
 
 int main()
 {
-	
+
 	start();
-    return 0;
 }
 
 void start()
@@ -23,7 +22,6 @@ void start()
 	std::vector<Node> skeleton;
     FileReader* reader = new FileReader( &BVHText);
     delete reader;
-    reader = NULL;
     FileParser* PrimaryParser = new FileParser( &BVHText);
 	BVHParser* bvhParser ;
 	if (PrimaryParser->GetDataType() == bvh)
@@ -40,10 +38,5 @@ void start()
 			std::cout << "data format not supported" << std::endl;
     }
 	delete PrimaryParser;
-    PrimaryParser = NULL;
     std::cout << "deleted" << std::endl;
-    //for (Node i : skeleton)
-    {
-    //    i.showName();
-    }
 }

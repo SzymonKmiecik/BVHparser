@@ -43,8 +43,13 @@ void BVHParser::CheckTokens(const std::string* data)
 	stream.str(*data);
 	std::string tmp;
 	unsigned depth = 0;
+	unsigned current_line = 0; //for debug
+	bool only_motion_left = false;
+	if (only_motion_left) {}; //unused defender
+//try{
 	while (std::getline(stream, tmp, '\n'))
-	{
+	{	
+	current_line++;	
   		if (tmp.find(KEYWORDS::hierarchy) != std::string::npos) //
 		{
 		
@@ -78,7 +83,10 @@ void BVHParser::CheckTokens(const std::string* data)
 		}
 		else if (tmp.find(KEYWORDS::channels) != std::string::npos) //
 		{
-			temp_node_data->setChannelsOrder(ParseChannelsOrder(tmp, temp_node_data));
+			std::string order = ParseChannelsOrder(tmp, temp_node_data);
+			std::string sub_order = order.substr(1,6);//remove first junk character from parsing loop
+			temp_node_data->setChannelsOrder(sub_order);
+		//	temp_node_data->setChannelsOrder(ParseChannelsOrder(tmp, temp_node_data));
 		}
 		else if (tmp.find(KEYWORDS::end_site) != std::string::npos) //
 		{
@@ -88,11 +96,12 @@ void BVHParser::CheckTokens(const std::string* data)
 		}
 		else if (tmp.find(KEYWORDS::frames) != std::string::npos) //
 		{
-			parseFrameCount(tmp);
+			skeleton[0].setFramesNumberPtr( parseFrameCount(tmp));
 		}
 		else if (tmp.find(KEYWORDS::frame_time) != std::string::npos) //
 		{
-			parseFrameTime(tmp);
+			skeleton[0].setFrameTime(parseFrameTime(tmp));
+			only_motion_left = true;
 		}
 		else if (tmp.find(KEYWORDS::left_bracket) != std::string::npos) //
 		{
@@ -100,13 +109,19 @@ void BVHParser::CheckTokens(const std::string* data)
 			temp_node_data->setHierarchyDepth(depth);
 			unsigned parent_offset = findParentOffset(depth, skeleton);
 			temp_node_data->setParentVectorOffset(parent_offset);
+			temp_node_data->setParentPtr(&skeleton[parent_offset]);
 		}
 		else if (tmp.find(KEYWORDS::right_bracket) != std::string::npos) //
 		{
 			calcHierarchyDepth(-1, depth);
-		}		
-	}
+		}
+	 }
 	printSkeletonDetails();
+//}
+//		catch(unsigned e)
+//		{
+//		std::cout << "Parse error at line: " << e << std::endl; 
+//		}
 }
 
 void BVHParser::printSkeletonDetails()
@@ -117,26 +132,37 @@ void BVHParser::printSkeletonDetails()
 	{
 		
 		for (unsigned i = 0; i <= it->getHierarchyDepth(); i++)
-		{ std::cout << "|" ; } 
+		{ std::cout << "" ; } 
 		{}
-		std::cout << "depth:  " << it->getHierarchyDepth() << " ";
-		it->showName(); 
+		std::cout << "DEPTH:" << it->getHierarchyDepth() << " NAME:";
+		std::string name_buffer_end_site_check = it->showName().str(); 
 		
 		if(segmentDef)
-		 { std::cout << "  parent: "; skeleton[it->getParentVectorOffset()].showName(); std::cout << std::endl; }
+		 { 
+			 //std::cout << "  parent: "; skeleton[it->getParentVectorOffset()].showName(); std::cout << std::endl; }
+			it->printParentName();
+		 }
 		else
+		{
+			it->printFramesNumber();
+			it->printFrameTime();
+		}
 		{ std::cout << std::endl; }
 		segmentDef = true;
 		
 		float* offsets = it->getOffset();
-		std::cout << "Offset: "; 
+		std::cout << "OFFSET: "; 
 		for(int i=0; i<3; i++)
 		{
 			std::cout << offsets[i] << " ";
 		}
-			std::cout << std::endl;
-		
+			std::cout << "\n";
+			if (name_buffer_end_site_check.find(KEYWORDS::end_site) == std::string::npos)
+			it->printChannelsOrder();
+
+			std::cout << std::endl << std::endl;
 	}
+				std::cout << "Skeleton size: " << skeleton.size() << " Nodes\n";
 }
 
 std::string BVHParser::ParseName(std::string text_line)
@@ -179,22 +205,38 @@ std::string BVHParser::ParseChannelsOrder(std::string line, Node* bone)
 	int channelCount;
 	stream >> channelCount;
 	bone->setChannelsCount(channelCount);
-	for(int i = 0; i < channelCount; i++)
+	junk = stream.str();
+	//channels += junk[0];
+	for(unsigned i = 1; i < junk.size()-1; i++)
 	{
-		stream >> channels[i]; 
-		stream >> junk;
+		if(junk[i] == ' ' && junk[i-1]!=' ') {channels+=junk[i+1];} //getting first letters of channels i.e "XYZYXZ"
+		//stream >> channels[i]; 
+		//stream >> junk;
 	}
+//bone->setChannelsOrder(channels);
 	return channels;
 }
 
-unsigned BVHParser::parseFrameCount(std::string)
+unsigned BVHParser::parseFrameCount(std::string line)
 {
-	return 6;
+	unsigned frames;
+	std::string junk;
+	std::stringstream stream;
+	stream.str(line);
+	stream >> junk;
+	stream >> frames;
+	return frames;
 }
 
-double BVHParser::parseFrameTime(std::string)
+float BVHParser::parseFrameTime(std::string line)
 {
-	return 0.033;
+	float frame_time;
+	std::string junk;
+	std::stringstream stream;
+	stream.str(line);
+	stream >> junk >> junk;
+	stream >> frame_time;
+	return frame_time;
 }
 
 Node BVHParser::parseEndSite(std::string)

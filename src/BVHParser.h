@@ -38,7 +38,7 @@ public:
  std::string parseRawMotionValues(const std::string*);
  std::string ParseChannelsOrder(std::string, Node*);
  unsigned parseFrameCount(std::string);
- double parseFrameTime(std::string);
+ float parseFrameTime(std::string);
  Node parseEndSite(std::string);
  unsigned findParentOffset(unsigned, std::vector<Node>&);
 };
