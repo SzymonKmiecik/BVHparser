@@ -107,21 +107,87 @@ void BVHParser::CheckTokens(const std::string* data)
 		{
 			calcHierarchyDepth(+1, depth);
 			temp_node_data->setHierarchyDepth(depth);
-			unsigned parent_offset = findParentOffset(depth, skeleton);
+			int parent_offset = findParentOffset(depth, skeleton);
 			temp_node_data->setParentVectorOffset(parent_offset);
+			if (parent_offset > -1)
+			{
 			temp_node_data->setParentPtr(&skeleton[parent_offset]);
+			}
 		}
+	
 		else if (tmp.find(KEYWORDS::right_bracket) != std::string::npos) //
 		{
 			calcHierarchyDepth(-1, depth);
 		}
+		if (only_motion_left)
+		break;
 	 }
+	const std::string* motion_raw_text = trimMotionValues(raw_data_text);
+	nodesMotionVectorReserve();
+//	std::cout << *motion_raw_text << std::endl;
+	parseMotion(motion_raw_text);
 	printSkeletonDetails();
 //}
 //		catch(unsigned e)
 //		{
 //		std::cout << "Parse error at line: " << e << std::endl; 
 //		}
+}
+
+
+void BVHParser::parseMotion(const std::string* data)
+{
+	std::stringstream stream;
+	stream.str(*data);
+	std::string tmp;
+	std::vector<Node>::iterator it;
+	while (std::getline(stream, tmp, '\n'))
+	{
+		//unsigned node_motion_offset =0;
+		std::vector<std::vector<double>> test;
+		for(it = skeleton.begin(); it != skeleton.end(); it++)
+		{
+			std::string temp = it->showName().str();
+			std::string check = "End Site";
+		if (temp.find(KEYWORDS::end_site) == std::string::npos)
+		{
+			test.push_back(it->composeMatrixTransform(it->getChannelsNumber(), tmp));
+			trim(tmp, it->getChannelsNumber()); // remove used motion values
+		}
+		else 
+			continue;
+		}
+		//for(unsigned i=0; i<test.size();i++)
+		//{
+		//std::cout << std::endl;
+		//for(unsigned j=0; j<test[i].size(); j++);
+		//		std::cout << test[i][j] << " ";
+		//}
+		//getchar();
+//		std::cout << "Vector test size: " <<test.size() << std::endl;
+	}
+}
+
+
+ std::string* BVHParser::trimMotionValues(const std::string* data)
+{
+	std::string* motion_values = new std::string;
+	*motion_values = *data;
+	size_t motion_pos = data->find("Frame Time:");
+	size_t forward_pos = data->find("\n", motion_pos);
+	//size_t reverse_pos = data.rfind("\n", motion_pos);
+	//*motion_values = data->erase(0, forward_pos);
+	motion_values->erase(0,forward_pos+1);
+	return motion_values;
+}
+
+void BVHParser::nodesMotionVectorReserve()
+{
+	std::vector<Node>::iterator it;
+	for(it = skeleton.begin(); it != skeleton.end(); it++)
+	{
+	it->reserveMatrixVector(skeleton[0].printFramesNumber());	
+	}
 }
 
 void BVHParser::printSkeletonDetails()
@@ -134,8 +200,8 @@ void BVHParser::printSkeletonDetails()
 		for (unsigned i = 0; i <= it->getHierarchyDepth(); i++)
 		{ std::cout << "" ; } 
 		{}
-		std::cout << "DEPTH:" << it->getHierarchyDepth() << " NAME:";
 		std::string name_buffer_end_site_check = it->showName().str(); 
+		std::cout << "DEPTH:" << it->getHierarchyDepth() << " NAME:" << name_buffer_end_site_check;
 		
 		if(segmentDef)
 		 { 
@@ -144,10 +210,10 @@ void BVHParser::printSkeletonDetails()
 		 }
 		else
 		{
-			it->printFramesNumber();
+			std::cout << "FRAMES:" <<	it->printFramesNumber() << " ";
 			it->printFrameTime();
 		}
-		{ std::cout << std::endl; }
+		std::cout << std::endl; 
 		segmentDef = true;
 		
 		float* offsets = it->getOffset();
@@ -160,9 +226,22 @@ void BVHParser::printSkeletonDetails()
 			if (name_buffer_end_site_check.find(KEYWORDS::end_site) == std::string::npos)
 			it->printChannelsOrder();
 
-			std::cout << std::endl << std::endl;
+			std::cout << std::endl ;
 	}
 				std::cout << "Skeleton size: " << skeleton.size() << " Nodes\n";
+				
+				//skeleton[0].local_transform[0].print_data();
+				//skeleton[0].global_transform[1].print_data();
+				//skeleton[2].local_transform[2].print_data();
+				//skeleton[2].global_transform[2].print_data();
+				for(unsigned i = 0; i < skeleton[2].xyz_pos.size(); i++)
+				{
+					std::cout << std::endl;
+					for(unsigned j = 0; j < skeleton[2].xyz_pos[i].size()-1; j++)
+					{ std::cout << skeleton[2].xyz_pos[i][j] << " "; }
+					
+				}
+				std::cout << "\nDisplayed position X Y Z for LeftLeg node (test)\n" << std::endl;
 }
 
 std::string BVHParser::ParseName(std::string text_line)
@@ -244,7 +323,7 @@ Node BVHParser::parseEndSite(std::string)
 	return Node("End Site");
 }
 
-unsigned BVHParser::findParentOffset(unsigned x,std::vector<Node>& y)
+int BVHParser::findParentOffset(unsigned x,std::vector<Node>& y)
 {
 	unsigned index = 1;
 	//for ( std::vector<Node>::iterator i = y.end(); i-- != y.begin(); index++)
@@ -253,6 +332,16 @@ unsigned BVHParser::findParentOffset(unsigned x,std::vector<Node>& y)
 		if (it->getHierarchyDepth() == (x-1))
 		{ return (y.size()-index); } 
 	}
-	return 0;
+	return -1;
 }
+
+void BVHParser::trim(std::string& x, unsigned rm_count)
+{
+	size_t pos = 0;
+	for (unsigned i =0; i < rm_count; i++)
+	{
+		pos = x.find(' ',pos+1);
+	}
+	x.erase(0, pos+1);
+	}
 

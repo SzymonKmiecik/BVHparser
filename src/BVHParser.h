@@ -40,5 +40,9 @@ public:
  unsigned parseFrameCount(std::string);
  float parseFrameTime(std::string);
  Node parseEndSite(std::string);
- unsigned findParentOffset(unsigned, std::vector<Node>&);
+ int findParentOffset(unsigned, std::vector<Node>&);
+ void nodesMotionVectorReserve();
+ std::string* trimMotionValues( const std::string*);
+ void trim(std::string&, unsigned);
+ void parseMotion(const std::string*);
 };
