@@ -18,8 +18,11 @@
 
 
 
-BVHParser::BVHParser(const std::string* data, std::vector<Node>& global_skeleton) : skeleton(global_skeleton)
+BVHParser::BVHParser(const std::string* data, std::vector<Node>& global_skeleton, std::string& path) : skeleton(global_skeleton)
 {
+	file_path = path;
+	trimPath();
+	//mkdir(file_path);
 	//this->skeleton = global_skeleton;
 	skeleton.reserve(100);
 	this->raw_data_text = data;
@@ -126,7 +129,12 @@ void BVHParser::CheckTokens(const std::string* data)
 	nodesMotionVectorReserve();
 //	std::cout << *motion_raw_text << std::endl;
 	parseMotion(motion_raw_text);
-	printSkeletonDetails();
+	//FileWriter write();
+	std::stringstream buf;
+	buf << printSkeletonDetails().rdbuf();
+	//FileWriter write(buf);
+	writeCsv(buf.str(), file_path, "Meta_data"); ///write metadata
+	//write.writeTocsv(buf);
 //}
 //		catch(unsigned e)
 //		{
@@ -154,8 +162,11 @@ void BVHParser::parseMotion(const std::string* data)
 			test.push_back(it->composeMatrixTransform(it->getChannelsNumber(), tmp));
 			trim(tmp, it->getChannelsNumber()); // remove used motion values
 		}
-		else 
+		else
+		{
+			it->endSiteXYZ();
 			continue;
+		}
 		}
 		//for(unsigned i=0; i<test.size();i++)
 		//{
@@ -190,45 +201,69 @@ void BVHParser::nodesMotionVectorReserve()
 	}
 }
 
-void BVHParser::printSkeletonDetails()
+std::stringstream BVHParser::printSkeletonDetails()
 {
+	std::stringstream stream;
 	std::vector<Node>::iterator it;
 	bool segmentDef= false;
-	for(it = skeleton.begin(); it != skeleton.end(); it++)
+	int index = 0;
+	for(it = skeleton.begin(); it != skeleton.end(); it++, index++)
 	{
-		
+		if(it->showName().str().find("End Site") != std::string::npos)
+		{
+			std::stringstream ss;
+			std::string parentnm = it->parent->showName().str();
+			parentnm.pop_back();
+			ss << parentnm << "EndSite";
+			std::string parent_site = ss.str();
+			writeCsv(printXYZcoords(skeleton[index]).str(), file_path, parent_site);
+		}
+		else
+		{
+			writeCsv(printXYZcoords(skeleton[index]).str(), file_path, it->showName().str());
+		}
 		for (unsigned i = 0; i <= it->getHierarchyDepth(); i++)
-		{ std::cout << "" ; } 
+		{ std::cout << "" ;
+		  stream    << "" ; } 
 		{}
 		std::string name_buffer_end_site_check = it->showName().str(); 
 		std::cout << "DEPTH:" << it->getHierarchyDepth() << " NAME:" << name_buffer_end_site_check;
+		stream    << "DEPTH:" << it->getHierarchyDepth() << " NAME:" << name_buffer_end_site_check;
 		
 		if(segmentDef)
 		 { 
 			 //std::cout << "  parent: "; skeleton[it->getParentVectorOffset()].showName(); std::cout << std::endl; }
 			it->printParentName();
+			stream << "PARENT:" << it->parent->showName().rdbuf();
 		 }
 		else
 		{
 			std::cout << "FRAMES:" <<	it->printFramesNumber() << " ";
-			it->printFrameTime();
+			stream    << "FRAMES:" <<   it->printFramesNumber() << " ";
+			stream    << "FRAME_TIME:" << it->printFrameTime();
 		}
-		std::cout << std::endl; 
+		std::cout << std::endl;
+		//stream    << std::endl;
 		segmentDef = true;
 		
 		float* offsets = it->getOffset();
-		std::cout << "OFFSET: "; 
+		std::cout << "OFFSET: ";
+		stream    << "OFFSET: ";
 		for(int i=0; i<3; i++)
 		{
 			std::cout << offsets[i] << " ";
+			stream    << offsets[i] << " ";
 		}
 			std::cout << "\n";
+			stream    << "\n";
 			if (name_buffer_end_site_check.find(KEYWORDS::end_site) == std::string::npos)
-			it->printChannelsOrder();
+			stream    << it->printChannelsOrder().rdbuf() <<std::endl;
 
-			std::cout << std::endl ;
+			std::cout << std::endl;
+			stream    << std::endl;
 	}
 				std::cout << "Skeleton size: " << skeleton.size() << " Nodes\n";
+				stream    << "Skeleton size: " << skeleton.size() << " Nodes\n";
 				
 				//skeleton[0].local_transform[0].print_data();
 				//skeleton[0].global_transform[1].print_data();
@@ -242,6 +277,7 @@ void BVHParser::printSkeletonDetails()
 					
 				}
 				std::cout << "\nDisplayed position X Y Z for LeftLeg node (test)\n" << std::endl;
+				return stream;
 }
 
 std::string BVHParser::ParseName(std::string text_line)
@@ -345,3 +381,36 @@ void BVHParser::trim(std::string& x, unsigned rm_count)
 	x.erase(0, pos+1);
 	}
 
+void BVHParser::writeCsv(std::string stream, std::string path, std::string node_name)
+{
+	std::ofstream file;
+	std::string full_path = "";
+	std::stringstream ss;
+	node_name.pop_back();
+	ss << node_name << ".csv";
+	//ss << path << "/" << node_name << ".csv";
+	full_path = ss.str();
+	file.open(full_path);
+	file << stream;
+	file.close();
+}
+
+void BVHParser::trimPath()
+{
+	size_t pos_ex =  this->file_path.find(".bvh");
+	size_t pos_sl =  this->file_path.rfind("/", pos_ex);
+	file_path = file_path.substr(pos_sl+1, pos_ex-pos_sl-1);
+}
+
+std::stringstream BVHParser::printXYZcoords(Node x)
+{
+	std::stringstream stream; 
+	for (unsigned i=0; i < x.xyz_pos.size(); i++)
+	{
+	stream << x.xyz_pos[i][0] << " ";
+	stream << x.xyz_pos[i][1] << " ";
+	stream << x.xyz_pos[i][2] << " ";
+	stream << std::endl;
+	}
+	return stream;
+}

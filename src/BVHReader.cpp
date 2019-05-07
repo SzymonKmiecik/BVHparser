@@ -18,15 +18,17 @@ int main()
 void start()
 {
 	    std::string BVHText;
+		std::string file_path = "";
     //std::vector< Node > skeleton = new std::vector< Node >();
 	std::vector<Node> skeleton;
     FileReader* reader = new FileReader( &BVHText);
+	file_path = reader->getFilePath();
     delete reader;
     FileParser* PrimaryParser = new FileParser( &BVHText);
 	BVHParser* bvhParser ;
 	if (PrimaryParser->GetDataType() == bvh)
 	{
-		PrimaryParser = new BVHParser( &BVHText, skeleton);
+		PrimaryParser = new BVHParser( &BVHText, skeleton, file_path);
 		bvhParser = dynamic_cast<BVHParser*>(PrimaryParser); //for testing
 		if (!bvhParser)
 			{ std::cout << "Parser cast fault" << std::endl ;}

@@ -7,6 +7,7 @@ FileReader::FileReader(std::string* RawTextMemory)
 while (filePath.empty())
 {
 	filePath =  ChoseFilePath();
+	if (filePath.empty());
 }
 	//if (filePath != nullptr)
 	{
@@ -89,4 +90,9 @@ std::string FileReader::ReadBvhFile()
 	buffer << in.rdbuf();
 	std::string rawBVH(buffer.str());
 	return rawBVH;
+}
+
+std::string FileReader::getFilePath()
+{
+return this->filePath;
 }

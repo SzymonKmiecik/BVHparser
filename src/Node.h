@@ -15,7 +15,6 @@ class Node
 	std::string name = "";
 	int parent_vector_offset;
 	OFFSET offset;
-	Node* parent = nullptr;
 	unsigned hierarchy_depth;
 	std::string* raw_motion_values;
 	std::string channels_order = "";
@@ -28,6 +27,8 @@ class Node
 
 
 public:
+	Node* parent = nullptr;
+
 	std::vector<Matrix<double>> local_transform;
 	std::vector<Matrix<double>> global_transform;
 	std::vector<double> origin;
@@ -50,16 +51,18 @@ public:
 	Matrix<double> composeGlobalTransform();
 	std::vector<double> computeOrigin();
 	std::vector<double> computeXYZcords();
+	void endSiteXYZ();
 
 	unsigned getParentVectorOffset();
 	std::stringstream showName();
 	float* getOffset();
 	unsigned getHierarchyDepth();
 	void printParentName();
-	void printChannelsOrder();
+	std::stringstream printChannelsOrder();
 	unsigned getChannelsNumber();
 	unsigned printFramesNumber();
-	void printFrameTime();
+	float printFrameTime();
+	
 	
 	
 	Node();

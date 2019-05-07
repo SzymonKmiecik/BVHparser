@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include "Node.h"
+#include "FileWriter.h"
 
 #define bvh 0x01
 #define not_supported 0x02

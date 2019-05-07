@@ -10,11 +10,12 @@ class FileReader
 {
 	std::string filePath;
 	
-
 	std::string ChoseFilePath();
 	std::string ReadBvhFile();
 
+
 public:
+	std::string getFilePath();
 	FileReader(std::string*);
 	~FileReader();
 

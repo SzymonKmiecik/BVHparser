@@ -87,9 +87,12 @@ void Node::setFramesNumberPtr(unsigned x)
 this->frames_number = new unsigned {x};
 }
 
-void Node::printChannelsOrder()
+std::stringstream Node::printChannelsOrder()
 {
- std::cout << "CHANNELS:" << this->channels_count << " ORDER:" << this->channels_order << " "; 
+ std::stringstream temp;
+ std::cout << "CHANNELS:" << this->channels_count << " ORDER:" << this->channels_order << " ";
+ temp      << "CHANNELS:" << this->channels_count << " ORDER:" << this->channels_order << " ";
+ return temp;
 }
 
 unsigned Node::printFramesNumber()
@@ -111,9 +114,10 @@ void Node::printParentName()
  parent->showName();
 }
 
-void Node::printFrameTime()
+float Node::printFrameTime()
 {
 std::cout << "FRAME TIME:" << *this->frame_time;
+return *frame_time;
 }
 
 void Node::setFrameTime(float x)
@@ -236,6 +240,19 @@ std::vector<double> Node::computeXYZcords()
 {
 	return this->global_transform.back()*this->origin;
 	//return this->origin*this->global_transform.back();
+}
+
+void Node::endSiteXYZ()
+{
+	this->xyz_pos.resize( this->parent->xyz_pos.size());
+	for(unsigned i=0; i < this->parent->xyz_pos.size(); i++)
+	{
+		this->xyz_pos[i].resize(3,0.0);
+		this->xyz_pos[i][0]+= this->offset.x + this->parent->xyz_pos[i][0];
+		this->xyz_pos[i][1]+= this->offset.y + this->parent->xyz_pos[i][1];
+		this->xyz_pos[i][2]+= this->offset.z + this->parent->xyz_pos[i][2];
+		//this->xyz_pos[i] += parent->xyz_pos[i];
+	}
 }
 
 

@@ -1,5 +1,8 @@
 
 #include "FileParser.h"
+//#include <direct.h>
+//#include <sys/stat.h>
+//#include <cstdlib>       //for mkdir 
 
  struct KEYWORDS
 {
@@ -22,16 +25,17 @@ class BVHParser : public FileParser
 {
 	std::vector<Node> skeleton;
 	const std::string* raw_data_text;
+	std::string file_path;
 	
 public:
 
  BVHParser();
- BVHParser (const std::string*, std::vector<Node>&);
+ BVHParser (const std::string*, std::vector<Node>&, std::string&);
  ~BVHParser();
 
  void CheckTokens(const std::string*);
  //void InputNodeIntoSkeleton(Node*, std::vector<Node>);
- void printSkeletonDetails();
+ std::stringstream printSkeletonDetails();
  std::string ParseName(std::string);
  float* parseOffset(std::string, float*);
  void calcHierarchyDepth(int, unsigned &);
@@ -45,4 +49,7 @@ public:
  std::string* trimMotionValues( const std::string*);
  void trim(std::string&, unsigned);
  void parseMotion(const std::string*);
+ void writeCsv(std::string, std::string, std::string);
+ void trimPath();
+ std::stringstream printXYZcoords(Node);
 };
